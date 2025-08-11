@@ -14,20 +14,21 @@ const char* DEFINITIONS_FILE_PATH = "MobileGL/MG_Impl/GLImpl/Exporting/Definitio
 const char* CMAKELISTS_FILE_PATH = "CMakeLists.txt";
 
 const char* INIT_HEADER_FILE_CONTENT = R"init(#pragma once
+#include <Includes.h>
 
 namespace MobileGL {
-	namespace MG_Impl::GLImpl {
+    namespace MG_Impl::GLImpl {
         /* @INSERTION_POINT:FUNCTION_DECLARATION@ */
-	}
-})init";
+    } // namespace MG_Impl::GLImpl
+} // namespace MobileGL)init";
 
-const char* INIT_SOURCE_CODE_FILE_CONTENT = R"init(#include "../../../Includes.h"
+const char* INIT_SOURCE_CODE_FILE_CONTENT = R"init(
 
 namespace MobileGL {
-	namespace MG_Impl::GLImpl {
+    namespace MG_Impl::GLImpl {
         /* @INSERTION_POINT:FUNCTION_IMPLEMENTATION@ */
-	}
-})init";
+    } // namespace MG_Impl::GLImpl
+} // namespace MobileGL)init";
 
 const char* INSERTION_POINT_FUNCTION_DECLARATION = "/* @INSERTION_POINT:FUNCTION_DECLARATION@ */";
 const char* INSERTION_POINT_FUNCTION_IMPLEMENTATION = "/* @INSERTION_POINT:FUNCTION_IMPLEMENTATION@ */";
@@ -171,6 +172,15 @@ void MakeSureSourceInCMakeListsFile(const std::string& component) {
     std::cout << "Added source to CMakeLists '" << sourcePath << "'" << std::endl;
 }
 
+void replaceFirstLine(std::string& content, const std::string& newFirstLine) {
+    size_t pos = content.find('\n');
+    if (pos == std::string::npos) {
+        content = newFirstLine;
+    } else {
+        content = newFirstLine + content.substr(pos);
+    }
+}
+
 void WriteSourceAndHeaderFiles(const std::string& functionName, const std::string& component) {
     std::string filePathPrefix = std::string(GL_IMPL_DIRECTORY_PATH) + "/" + component + "/GL_" + component;
 
@@ -184,8 +194,10 @@ void WriteSourceAndHeaderFiles(const std::string& functionName, const std::strin
     EnsureFileAndDirsExist(filePathPrefix + ".cpp");
     std::string sourcefileContent = GetFileContent(filePathPrefix + ".cpp");
     if (sourcefileContent.empty()) {
-        WriteToFile(filePathPrefix + ".cpp", INIT_SOURCE_CODE_FILE_CONTENT);
-        sourcefileContent = INIT_SOURCE_CODE_FILE_CONTENT;
+        std::string realContent = INIT_SOURCE_CODE_FILE_CONTENT;
+        replaceFirstLine(realContent, "#include \"GL_" + component + ".h\"");
+        WriteToFile(filePathPrefix + ".cpp", realContent);
+        sourcefileContent = realContent;
     }
 
     MakeSureSourceInCMakeListsFile(component);
