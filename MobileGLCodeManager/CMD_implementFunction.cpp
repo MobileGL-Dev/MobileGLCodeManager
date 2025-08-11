@@ -12,7 +12,6 @@
 const char* GL_IMPL_DIRECTORY_PATH = "MobileGL/MG_Impl/GLImpl";
 const char* DEFINITIONS_FILE_PATH = "MobileGL/MG_Impl/GLImpl/Exporting/Definitions.cpp";
 const char* CMAKELISTS_FILE_PATH = "CMakeLists.txt";
-const char* INCLUDES_FILE_PATH = "MobileGL/Includes.h";
 
 const char* INIT_HEADER_FILE_CONTENT = R"init(#pragma once
 
@@ -33,7 +32,6 @@ namespace MobileGL {
 const char* INSERTION_POINT_FUNCTION_DECLARATION = "/* @INSERTION_POINT:FUNCTION_DECLARATION@ */";
 const char* INSERTION_POINT_FUNCTION_IMPLEMENTATION = "/* @INSERTION_POINT:FUNCTION_IMPLEMENTATION@ */";
 const char* INSERTION_POINT_SOURCE_FILE_GLIMPL = "# @INSERTION_POINT:SOURCE_FILE_GLIMPL@ #";
-const char* INSERTION_POINT_HEADER_FILE_GLIMPL = "/* @INSERTION_POINT:HEADER_FILE_GLIMPL@ */";
 
 
 namespace fs = std::filesystem;
@@ -143,37 +141,6 @@ void SetFunctionStub(const std::string& filename, const std::string& func_name, 
     outFile.close();
 }
 
-void MakeSureHeaderInIncludesFile(const std::string& component) {
-    if (!IsFileExists(INCLUDES_FILE_PATH)) {
-        std::cerr << "Includes file does not exist: " << INCLUDES_FILE_PATH << std::endl;
-        return;
-    }
-
-    std::string includesContent = GetFileContent(INCLUDES_FILE_PATH);
-
-    size_t insertPos = includesContent.find(INSERTION_POINT_HEADER_FILE_GLIMPL);
-    if (insertPos == std::string::npos) {
-        throw std::runtime_error("Insertion point not found in includes file");
-    }
-
-    std::string headerPath = "MG_Impl/GLImpl/" + component + "/GL_" + component + ".h";
-    std::string includeLine = "#include \"" + headerPath + "\"";
-
-    if (includesContent.find(includeLine) != std::string::npos) {
-        return;
-    }
-
-    size_t lineStart = includesContent.rfind('\n', insertPos) + 1;
-    std::string indent = includesContent.substr(lineStart, insertPos - lineStart);
-
-    includesContent.insert(insertPos + strlen(INSERTION_POINT_HEADER_FILE_GLIMPL),
-        "\n" + indent + includeLine);
-
-    WriteToFile(INCLUDES_FILE_PATH, includesContent);
-
-    std::cout << "Added header to Includes.h: " << headerPath << std::endl;
-}
-
 void MakeSureSourceInCMakeListsFile(const std::string& component) {
     if (!IsFileExists(CMAKELISTS_FILE_PATH)) {
         std::cerr << "CMakeLists file does not exist: " << CMAKELISTS_FILE_PATH << std::endl;
@@ -220,8 +187,6 @@ void WriteSourceAndHeaderFiles(const std::string& functionName, const std::strin
         WriteToFile(filePathPrefix + ".cpp", INIT_SOURCE_CODE_FILE_CONTENT);
         sourcefileContent = INIT_SOURCE_CODE_FILE_CONTENT;
     }
-
-    MakeSureHeaderInIncludesFile(component);
 
     MakeSureSourceInCMakeListsFile(component);
 
