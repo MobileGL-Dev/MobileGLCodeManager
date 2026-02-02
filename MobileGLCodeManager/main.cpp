@@ -259,7 +259,7 @@ private:
                 return false;
             }
             if (c == '\r' || c == '\n') {
-                std::cout << std::endl;
+                std::cout << "\r\n";
                 if (!buffer.empty()) history.push_back(buffer);
                 historyIndex = -1;
                 outLine = buffer;
